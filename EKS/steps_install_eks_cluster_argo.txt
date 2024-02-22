@@ -236,3 +236,7 @@ NAMESPACE: robot-shop
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
+
+==================== delete cluster ============================
+
+eksctl delete cluster --name robot-eks-cluster --region us-east-1
