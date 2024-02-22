@@ -1,6 +1,6 @@
 # Variables
-CLUSTER_NAME=robot-eks-cluster
-REGION=us-east-1
+CLUSTER_NAME=robot-eks-argo
+REGION=us-east-2
 NODE_NAME=robot-linux-nodes
 KEY_NAME=robot-app-key
 

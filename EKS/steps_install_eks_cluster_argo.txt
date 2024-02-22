@@ -82,12 +82,13 @@ ip-192-168-57-43.ec2.internal    Ready    <none>   17m   v1.29.0-eks-5e0fdde
 =======================================================================
 
 
-# export cluster_name=robot-eks-cluster
+# export cluster_name=robot-eks-argo
 # oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
 # aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4
 
 ========================== If above command didnt give any outpt then run below ===========
 # eksctl utils associate-iam-oidc-provider --cluster $cluster_name --approve
+
 2024-02-21 07:12:50 [ℹ]  will create IAM Open ID Connect provider for cluster "robot-eks-cluster" in "us-east-1"
 2024-02-21 07:12:51 [✔]  created IAM Open ID Connect provider for cluster "robot-eks-cluster" in "us-east-1"
 
@@ -105,19 +106,29 @@ ip-192-168-57-43.ec2.internal    Ready    <none>   17m   v1.29.0-eks-5e0fdde
 
 
 ==========================================
-# eksctl create iamserviceaccount --cluster=robot-eks-cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::160202668836:policy/AWSLoadBalancerControllerIAMPolicy --approve
+# eksctl create iamserviceaccount --cluster=robot-eks-argo --namespace=kube-system --name=aws-load-balancer-controller-nw --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::160202668836:policy/AWSLoadBalancerControllerIAMPolicy --approve
 
+eksctl create iamserviceaccount \
+  --cluster=robot-eks-argo \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --role-name=AmazonEKSLoadBalancerControllerRoleNw \
+  --attach-policy-arn=arn:aws:iam::160202668836:policy/AWSLoadBalancerControllerIAMPolicy \
+  --approve
+
+
+160202668836
 ===============================================
 
 
 
 # helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   --namespace kube-system \
-  --set clusterName=robot-eks-cluster \
+  --set clusterName=robot-eks-argo \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller \
-  --set region=us-east-1 \
-  --set vpcId=vpc-0e5d96aa0befacade
+  --set region=us-east-2 \
+  --set vpcId=<Enter VPC ID>
 
 ======================================================
 # kubectl get deployment -n kube-system aws-load-balancer-controller
@@ -126,7 +137,7 @@ ip-192-168-57-43.ec2.internal    Ready    <none>   17m   v1.29.0-eks-5e0fdde
 $ eksctl create iamserviceaccount \
     --name ebs-csi-controller-sa \
     --namespace kube-system \
-    --cluster robot-eks-cluster \
+    --cluster robot-eks-argo \
     --role-name AmazonEKS_EBS_CSI_DriverRole \
     --role-only \
     --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
