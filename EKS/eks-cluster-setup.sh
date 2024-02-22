@@ -1,7 +1,7 @@
 # Variables
 CLUSTER_NAME=robot-eks-cluster
 REGION=us-east-1
-NODE_NAME=Robot-Linux-nodes
+NODE_NAME=robot-linux-nodes
 KEY_NAME=robot-app-key
 
 # Set AWS credentials before script execution
@@ -18,9 +18,9 @@ then
   --region $REGION \
   --nodegroup-name $NODE_NAME \
   --nodes 2 \
-  --nodes-min 1 \
+  --nodes-min 2 \
   --nodes-max 4 \
-  --node-type t3.micro \
+  --node-type t4g.large \
   --node-volume-size 8 \
   --ssh-access \
   --ssh-public-key $KEY_NAME \
