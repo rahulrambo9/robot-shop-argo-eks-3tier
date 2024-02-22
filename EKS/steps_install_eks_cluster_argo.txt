@@ -1,0 +1,217 @@
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \            
+  -n kube-system \
+  --set clusterName=robot-eks-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set region=us-east-1 \
+  --set vpcId=vpc-0e5d96aa0befacade
+
+eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster robot-eks-cluster \
+    --role-name AmazonEKS_EBS_CSI_DriverRole \
+    --role-only \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --approve
+=========================  Start from below   ==========================
+
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/3TIER_APP_ROBOT/three-tier-architecture-demo/EKS (master)
+$ chmod +x eks-cluster-setup.sh
+
+===================== Shell script for EKS setup =====================
+
+
+# Variables
+CLUSTER_NAME=robot-eks-cluster
+REGION=us-east-1
+NODE_NAME=robot-linux-nodes
+KEY_NAME=robot-app-key
+
+# Set AWS credentials before script execution
+
+aws sts get-caller-identity >> /dev/null
+if [ $? -eq 0 ]
+then
+  echo "Credentials tested, proceeding with the cluster creation."
+
+  # Creation of EKS cluster
+  eksctl create cluster \
+  --name $CLUSTER_NAME \
+  --version 1.29 \
+  --region $REGION \
+  --nodegroup-name $NODE_NAME \
+  --nodes 2 \
+  --nodes-min 2 \
+  --nodes-max 4 \
+  --node-type t4g.large \
+  --node-volume-size 8 \
+  --ssh-access \
+  --ssh-public-key $KEY_NAME \
+  --managed
+  if [ $? -eq 0 ]
+  then
+    echo "Cluster Setup Completed with eksctl command."
+  else
+    echo "Cluster Setup Failed while running eksctl command."
+  fi
+else
+  echo "Please run aws configure & set right credentials."
+  echo "Cluster setup failed."
+fi
+
+
+
+
+
+============================================
+# sh eks-cluster-setup.sh
+Credentials tested, proceeding with the cluster creation.
+2024-02-21 06:35:24 [ℹ]  eksctl version 0.171.0
+2024-02-21 06:35:24 [ℹ]  using region us-east-1
+2024-02-21 06:35:25 [ℹ]  skipping us-east-1e from selection because it doesn't support the following instance type(s): t3.micro
+.
+.
+.
+=======================================================
+$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-23-173.ec2.internal   Ready    <none>   17m   v1.29.0-eks-5e0fdde
+ip-192-168-57-43.ec2.internal    Ready    <none>   17m   v1.29.0-eks-5e0fdde
+=======================================================================
+
+
+# export cluster_name=robot-eks-cluster
+# oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
+# aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4
+
+========================== If above command didnt give any outpt then run below ===========
+# eksctl utils associate-iam-oidc-provider --cluster $cluster_name --approve
+2024-02-21 07:12:50 [ℹ]  will create IAM Open ID Connect provider for cluster "robot-eks-cluster" in "us-east-1"
+2024-02-21 07:12:51 [✔]  created IAM Open ID Connect provider for cluster "robot-eks-cluster" in "us-east-1"
+
+==========================================================
+
+# curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  8386  100  8386    0     0  27946      0 --:--:-- --:--:-- --:--:-- 27953
+
+===============================================================
+# aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam_policy.json
+
+
+==========================================
+# eksctl create iamserviceaccount --cluster=robot-eks-cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::160202668836:policy/AWSLoadBalancerControllerIAMPolicy --approve
+
+===============================================
+
+
+# helm repo add eks https://aws.github.io/eks-charts
+
+"eks" has been added to your repositories
+
+
+# helm repo update eks
+
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "eks" chart repository
+Update Complete. ⎈Happy Helming!⎈
+
+
+# helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  --namespace kube-system \
+  --set clusterName=robot-eks-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set region=us-east-1 \
+  --set vpcId=vpc-0e5d96aa0befacade
+
+======================================================
+# kubectl get deployment -n kube-system aws-load-balancer-controller
+
+==============================================================
+$ eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster robot-eks-cluster \
+    --role-name AmazonEKS_EBS_CSI_DriverRole \
+    --role-only \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --approve
+
+
+================================================= Install ArgoCD =========================== 
+
+Requirements¶
+Installed kubectl command-line tool.
+Have a kubeconfig file (default location is ~/.kube/config).
+
+choco install argocd-cli  -----> Install argoCD cli
+
+------------
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+
+==================- change ArgoCD-server service type =============================
+
+Change the argocd-server service type to LoadBalancer:
+
+  #  kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
+
+================== Retrive initial password in argoCD and decode it from base64 format ====================================
+
+argocd admin initial-password -n argocd
+
+or 
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o json | jq .data.password -r | base64 -d
+
+
+=================== Port Forwarding =================================================================
+
+Kubectl port-forwarding can also be used to connect to the API server without exposing the service:
+
+# kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+
+=================== Create argoCD app or project using CLI ==========================
+
+# argocd app create robot-shop \
+    --repo https://github.com/example/myapp \
+    --path manifests \
+    --dest-server https://kubernetes-api.example.com \
+    --dest-namespace default
+
+Start Deployment:
+
+# argocd app sync robot-shop  [ or use UI ]
+
+
+========================================= Use below step only for normal k8 deployment =======================================
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/3TIER_APP_ROBOT/three-tier-architecture-demo/EKS (master)
+$ kubectl create ns robot-shop
+namespace/robot-shop created
+
+=============================================
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/3TIER_APP_ROBOT/three-tier-architecture-demo/EKS (master)
+$ cd helm/
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/3TIER_APP_ROBOT/three-tier-architecture-demo/EKS/helm (master)
+$ ls
+Chart.yaml  README.md  ingress.yaml  templates/  values.yaml
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/3TIER_APP_ROBOT/three-tier-architecture-demo/EKS/helm (master)
+$ helm install robot-shop --namespace robot-shop .
+NAME: robot-shop
+LAST DEPLOYED: Wed Feb 21 07:50:11 2024
+NAMESPACE: robot-shop
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
