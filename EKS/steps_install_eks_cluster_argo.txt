@@ -285,7 +285,7 @@ TEST SUITE: None
 
 ==================== delete cluster ============================
 
-eksctl delete cluster --name robot-eks-argo --region us-east-2
+eksctl delete cluster --name robot-eks-argo --region us-west-1
 
 
 
