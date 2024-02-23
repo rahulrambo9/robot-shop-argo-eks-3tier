@@ -17,10 +17,10 @@ then
   --version 1.29 \
   --region $REGION \
   --nodegroup-name $NODE_NAME \
-  --nodes 1 \
-  --nodes-min 1 \
-  --nodes-max 2 \
-  --node-type t3.large \
+  --nodes 2 \
+  --nodes-min 2 \
+  --nodes-max 4 \
+  --node-type t2.large \
   --node-volume-size 8 \
   --ssh-access \
   --ssh-public-key $KEY_NAME \
