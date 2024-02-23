@@ -222,7 +222,7 @@ pass: Rambo#037499
 
 argocd login 54.193.31.132:32509 --username admin --password Rambo#037499
 
-
+kubectl -n argocd patch configmap argocd-cm --patch= '{"datat":{"accounts.admin": "apiKey,login"}}'
 
 =================== Port Forwarding =================================================================
 

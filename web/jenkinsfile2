@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = 'rahul-docker'
+    }
+
+    stages {
+        
+        stage('Git Checkout'){
+           steps {
+                git credentialsId: 'rahul-github', 
+                url: 'https://github.com/rahulrambo9/robot-shop-src-argocd.git',
+                branch: 'main'
+           }
+        }
+
+    stages {
+        stage('Build Image') {
+            steps {
+                script {
+                    // Clone the repository to the Jenkins workspace
+                    git 'https://github.com/rahulrambo9/robot-shop-src-argocd.git'
+                    
+                    // Define the path to the Dockerfile and the context directory
+                    def dockerfilePath = "${WORKSPACE}/robot-shop-src-argocd/web/Dockerfile"
+                    def contextDir = "${WORKSPACE}/robot-shop-src-argocd/web"
+                    
+                    // Build the Docker image
+                    docker.build("rahulrambo9/robot-shop:latest", "-f ${dockerfilePath} ${contextDir}")
+                }
+            }
+        }
+    }
+ }
+
+}

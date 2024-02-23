@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = 'rahul-docker'
+        ARGOCD_TOKEN = 'rahul-argocd'
+        GITHUB_TOKEN = 'rahul-github'
+        ROBOT_SHOP_SOURCE_REPO = 'https://github.com/rahulrambo9/robot-shop-src-argocd/tree/main/web'
+        HELM_REPO = 'https://github.com/rahulrambo9/gitops-argocd-k8s.git'
+        APP_NAME = 'robot-shop'
+    }
+
+    stages {
+        stage('Build Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_HUB_CREDENTIALS) {
+                        def image = docker.build('rahulrambo9/robot-shop:latest', './robot-shop-src-argocd')
+                    }
+                }
+            }
+        }
+
+        stage('Push Image to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_HUB_CREDENTIALS) {
+                        docker.image('rahulrambo9/robot-shop:latest').push('latest')
+                    }
+                }
+            }
+        }
+
+        stage('Update Deployment YAML') {
+            steps {
+                script {
+                    sh 'git clone $HELM_REPO'
+                    sh 'sed -i "s|image:.*|image: rahulrambo9/robot-shop:latest|" gitops-argocd-k8s/robot-shop-eks/helm/templates/web-deployment.yaml'
+                    sh 'cd gitops-argocd-k8s && git add . && git commit -m "Update image tag" && git push'
+                }
+            }
+        }
+
+        stage('Sync with ArgoCD') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: ARGOCD_TOKEN, passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                        sh "argocd login --username $USERNAME --password $PASSWORD your-argocd-server"
+                        sh "argocd app sync $APP_NAME"
+                    }
+                }
+            }
+        }
+    }
+}
