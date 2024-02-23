@@ -95,6 +95,8 @@ ip-192-168-57-43.ec2.internal    Ready    <none>   17m   v1.29.0-eks-5e0fdde
 ==========================================================
 
 # curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+
+
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  8386  100  8386    0     0  27946      0 --:--:-- --:--:-- --:--:-- 27953
@@ -112,13 +114,24 @@ eksctl create iamserviceaccount \
   --cluster=robot-eks-argo \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
-  --role-name=AmazonEKSLoadBalancerControllerRoleNw \
+  --role-name=AmazonEKSLoadBalancerControllerRole \
   --attach-policy-arn=arn:aws:iam::160202668836:policy/AWSLoadBalancerControllerIAMPolicy \
   --approve
 
 
 160202668836
 ===============================================
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/robot-shop-argo-eks-3tier/EKS (main)
+# helm repo add EKS https://aws.github.io/eks-charts
+
+"EKS" has been added to your repositories
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/robot-shop-argo-eks-3tier/EKS (main)
+# helm repo update EKS
+
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "EKS" chart repository
+Update Complete. ⎈Happy Helming!⎈
 
 
 
@@ -127,11 +140,19 @@ eksctl create iamserviceaccount \
   --set clusterName=robot-eks-argo \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller \
-  --set region=us-east-2 \
-  --set vpcId=vpc-05b539bd3c0230323
+  --set region=us-west-1 \
+  --set vpcId=vpc-02caea3263e2e9b96
 
 ======================================================
 # kubectl get deployment -n kube-system aws-load-balancer-controller
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/robot-shop-argo-eks-3tier/EKS (main)
+# kubectl get deployment -n kube-system aws-load-balancer-controller
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+aws-load-balancer-controller   2/2     2            2           27s   <--output should be like this [Ready]
+
+
 
 ==============================================================
 $ eksctl create iamserviceaccount \
@@ -142,6 +163,16 @@ $ eksctl create iamserviceaccount \
     --role-only \
     --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
     --approve
+
+eksctl create addon --name aws-ebs-csi-driver --cluster robot-eks-argo --service-account-role-arn arn:aws:iam::160202668836:role/AmazonEKS_EBS_CSI_DriverRole --force
+
+
+========== verify EBS CSI driver installed or not =======
+
+admin@DESKTOP-H7KRRF0 MINGW64 /d/DevOps/robot-shop-argo-eks-3tier/EKS (main)
+# eksctl get addon --cluster robot-eks-argo | grep ebs
+
+aws-ebs-csi-driver      v1.27.0-eksbuild.1      ACTIVE  0       arn:aws:iam::160202668836:role/AmazonEKS_EBS_CSI_DriverRole
 
 
 ================================================= Install ArgoCD =========================== 
@@ -156,6 +187,8 @@ choco install argocd-cli  -----> Install argoCD cli
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
+kubectl get ns
+kubectl get po -n argocd   <-- all pod should be ready state
 
 ==================- change ArgoCD-server service type =============================
 
