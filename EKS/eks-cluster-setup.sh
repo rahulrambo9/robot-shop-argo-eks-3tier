@@ -21,7 +21,7 @@ then
   --nodes-min 2 \
   --nodes-max 4 \
   --node-type t2.large \
-  --node-volume-size 8 \
+  --node-volume-size 20 \
   --ssh-access \
   --ssh-public-key $KEY_NAME \
   --managed
