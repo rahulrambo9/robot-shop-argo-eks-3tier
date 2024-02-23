@@ -1,0 +1,12 @@
+apiVersion: rbac.argoproj.io/v1alpha1
+kind: RoleBinding
+metadata:
+  name: admin-binding
+  namespace: argocd
+subjects:
+- kind: User
+  name: admin
+roleRef:
+  kind: Role
+  name: admin-role
+  apiGroup: rbac.argoproj.io

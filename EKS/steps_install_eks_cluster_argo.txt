@@ -198,6 +198,8 @@ Change the argocd-server service type to LoadBalancer:
 
   kubectl get svc -n argocd 
 
+All all inbound 80:32509 port in EKS node ec2. --> then you can access argo server using nodeport
+
   access :  Myip: port
             http://49.36.11.208:32400/
 
@@ -218,7 +220,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 user: admin
 pass: Rambo#037499
 
-argocd login ab77479b4c2f0411cbe483e70a847ebb-550343458.us-east-1.elb.amazonaws.com --username admin --password Rambo#037499
+argocd login 54.193.31.132:32509 --username admin --password Rambo#037499
 
 
 
@@ -284,3 +286,9 @@ TEST SUITE: None
 ==================== delete cluster ============================
 
 eksctl delete cluster --name robot-eks-argo --region us-east-2
+
+
+
+kubectl patch svc stable-kube-prometheus-sta-prometheus -n prometheus -p '{"spec": {"type": "LoadBalancer"}}'
+
+kubectl patch svc stable-grafana -n prometheus -p '{"spec": {"type": "LoadBalancer"}}'

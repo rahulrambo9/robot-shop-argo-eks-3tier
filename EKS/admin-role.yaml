@@ -1,0 +1,9 @@
+apiVersion: rbac.argoproj.io/v1alpha1
+kind: Role
+metadata:
+  name: admin-role
+  namespace: argocd
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
